@@ -1,8 +1,11 @@
 VectorForge
 
-A from-scratch vector search engine implementing Exact Brute-Force Cosine Search and a custom IVF-Flat Approximate Nearest Neighbor (ANN) index.
+A from-scratch vector search engine implementing Exact Brute-Force
+Cosine Search and a custom IVF-Flat Approximate Nearest Neighbor (ANN)
+index.
 
-The project is built without Pinecone, FAISS, Chroma, sklearn.neighbors, or other pre-built vector indexing libraries.
+The project is built without Pinecone, FAISS, Chroma, sklearn.neighbors,
+or other pre-built vector indexing libraries.
 
 Highlights
 
@@ -46,7 +49,9 @@ Architecture
 
 Exact Search
 
-The exact index compares the query against every stored vector using cosine similarity. This provides the ground truth used to evaluate ANN recall.
+The exact index compares the query against every stored vector using
+cosine similarity. This provides the ground truth used to evaluate ANN
+recall.
 
 IVF-Flat
 
@@ -66,77 +71,64 @@ Returns the Top-K candidates.
 
 Benchmark
 
-The benchmark uses 50,000 vectors, 64 dimensions, 100 clusters, and 500 query vectors. Exact brute-force Top-10 results are used as ground truth.
+The benchmark uses 50,000 vectors, 64 dimensions, 100 clusters, and 500
+query vectors. Exact brute-force Top-10 results are used as ground
+truth.
 
 One benchmark run produced:
 
-nprobe
+nprobe   Recall@10   Avg Candidates   Speedup
 
-Recall@10
+     1      99.56%              501   133.58x
+     5      99.90%            2,503    29.66x
+    10      99.98%            5,002    11.55x
+    20     100.00%           10,001     6.06x
+    50     100.00%           25,001     2.48x
 
-Avg Candidates
+Timing can vary slightly between runs depending on the machine and
+system load. A useful operating point is nprobe=5, which achieved
+approximately 99.9% Recall@10 while examining about 5% of the dataset in
+this benchmark run.
 
-Speedup
+What Is Mocked / Synthetic
 
-1
+This project uses synthetic and mocked data for demonstration and
+benchmarking.
 
-99.56%
+The main 50,000-vector dataset is synthetically generated.
 
-501
+The 5,000 technical documents are programmatically generated.
 
-133.58x
+Text is converted into deterministic 64-dimensional vectors using
+lightweight hashing-based vectorization.
 
-5
-
-99.90%
-
-2,503
-
-29.66x
-
-10
-
-99.98%
-
-5,002
-
-11.55x
-
-20
-
-100.00%
-
-10,001
-
-6.06x
-
-50
-
-100.00%
-
-25,001
-
-2.48x
-
-Timing can vary slightly between runs depending on the machine and system load. A useful operating point is nprobe=5, which achieved approximately 99.9% Recall@10 while examining about 5% of the dataset in this benchmark run.
-
-Data and What Is Mocked
-
-The benchmark data is intentionally synthetic so the experiment is reproducible.
-
-The main 50,000-vector dataset is generated programmatically as clustered synthetic vectors.
-
-The 5,000 technical documents are generated programmatically from technical topics, contexts, methods, outcomes, and deployment targets.
-
-Text documents are converted into deterministic 64-dimensional vectors using lightweight hashing-based vectorization.
-
-The text vectorizer is not a transformer-based semantic embedding model.
+The text vectorizer is not a transformer-based semantic embedding
+model.
 
 No external vector database is used.
 
-No pre-built ANN/vector-index library is used.
+No pre-built ANN/vector-search library is used.
 
-Exact search and IVF-Flat indexing logic are implemented in this project.
+The exact brute-force index and IVF-Flat index are implemented from
+scratch.
+
+Data and Vectorization Details
+
+The benchmark data is intentionally synthetic so the experiment is
+reproducible.
+
+The main 50,000-vector dataset is generated programmatically as
+clustered synthetic vectors.
+
+The 5,000 technical documents are generated programmatically from
+technical topics, contexts, methods, outcomes, and deployment targets.
+
+Text documents are converted into deterministic 64-dimensional vectors
+using lightweight hashing-based vectorization.
+
+This text representation is intended for a deterministic text-search
+demonstration, not as a replacement for a production semantic embedding
+model.
 
 Requirements
 
@@ -180,7 +172,8 @@ Search
 
 POST /search
 
-Search using the exact index or IVF-Flat. The vector must contain 64 dimensions.
+Search using the exact index or IVF-Flat. The vector must contain 64
+dimensions.
 
 Example:
 
@@ -207,19 +200,22 @@ Statistics
 
 GET /stats
 
-Returns vector counts, dimensions, cluster counts, deleted vectors, and text-document statistics.
+Returns vector counts, dimensions, cluster counts, deleted vectors, and
+text-document statistics.
 
 Benchmark
 
 GET /benchmark
 
-Runs the exact-vs-IVF benchmark using 500 query vectors and reports Recall@10, latency, candidate counts, and speedup.
+Runs the exact-vs-IVF benchmark using 500 query vectors and reports
+Recall@10, latency, candidate counts, and speedup.
 
 Text Search
 
 POST /text-search
 
-Searches the generated technical-document collection using the same vector-search infrastructure.
+Searches the generated technical-document collection using the same
+vector-search infrastructure.
 
 Run Tests
 
@@ -261,11 +257,15 @@ NumPy is used for vector arithmetic and matrix operations.
 
 Why IVF-Flat?
 
-Exact search gives perfect recall but must compare the query with all vectors. IVF-Flat reduces the search space by routing the query to nearby clusters and then performing exact similarity calculations inside those selected clusters.
+Exact search gives perfect recall but must compare the query with all
+vectors. IVF-Flat reduces the search space by routing the query to
+nearby clusters and then performing exact similarity calculations inside
+those selected clusters.
 
 nprobe controls the trade-off:
 
-Lower nprobe → fewer candidates, faster search, potentially lower recall
+Lower nprobe → fewer candidates, faster search, potentially lower
+recall
 
 Higher nprobe → more candidates, slower search, higher recall
 
@@ -291,4 +291,5 @@ Demonstrate Insert → Search → Delete using the API.
 
 License
 
-This project is created as a technical assignment and portfolio/interview demonstration.
+This project is created as a technical assignment and
+portfolio/interview demonstration.
