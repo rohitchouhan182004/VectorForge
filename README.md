@@ -219,6 +219,21 @@ GET /benchmark
 
 Runs the 500-query exact-ground-truth benchmark and returns measurements for all configured nprobe values.
 
+## Setup / Installation
+
+### Requirements
+
+- Python 3.12+
+- pip
+
+### Install
+
+Clone the repository and open the project directory:
+
+```bash
+git clone https://github.com/rohitchouhan182004/VectorForge.git
+cd VectorForge
+
 Installation
 
 Python 3.12 was used during development.
