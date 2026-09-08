@@ -1,339 +1,294 @@
 VectorForge
 
-VectorForge is a lightweight vector search engine built from scratch in Python. It compares exact brute-force cosine similarity search with a custom IVF-Flat approximate nearest-neighbor index.
+A from-scratch vector search engine implementing Exact Brute-Force Cosine Search and a custom IVF-Flat Approximate Nearest Neighbor (ANN) index.
 
-Features
+The project is built without Pinecone, FAISS, Chroma, sklearn.neighbors, or other pre-built vector indexing libraries.
+
+Highlights
 
 50,000 synthetic 64-dimensional vectors
 
-100 vector clusters
+100 IVF clusters
 
-Exact brute-force cosine similarity search
+Exact brute-force cosine similarity baseline
 
-Custom IVF-Flat index
+IVF-Flat implemented from scratch
 
-Configurable nprobe
+Configurable nprobe for speed/recall trade-offs
 
-Recall@10 evaluation against exact ground truth
+500 query vectors with exact Top-10 ground truth
 
-500-query benchmark
-
-Speedup and candidate-count measurements
-
-Recall/QPS Pareto visualization
-
-Insert, search, and delete APIs
-
-5,000 short technical documents
-
-Text-to-vector search layer using deterministic 64-dimensional vectors
+Recall@10 benchmarking
 
 FastAPI REST API
 
-Browser dashboard for live demonstrations
+Insert, search, delete, and statistics endpoints
+
+5,000 generated technical text documents for a text-search demo
+
+Browser dashboard with benchmark visualizations
 
 Architecture
 
-                    VectorForge
-                        |
-        +---------------+----------------+
-        |                                |
-   Vector Dataset                   Text Dataset
-   50,000 vectors                   5,000 documents
-   64 dimensions                    64D vectors
-        |                                |
-   +----+-----+                    +-----+------+
-   |          |                    |            |
-Exact       IVF-Flat            Exact       IVF-Flat
-Search      Search              Search      Search
-   |          |                    |            |
-   +----------+--------------------+------------+
-                        |
-                   FastAPI API
-                        |
-                  Web Dashboard
+                 VectorForge
+                     |
+          +----------+----------+
+          |                     |
+    Exact Index             IVF-Flat Index
+          |                     |
+   Brute-force cosine     Cluster assignment
+          |                     |
+     Ground truth        nprobe clusters
+          |                     |
+          +----------+----------+
+                     |
+                Top-K results
+
+Exact Search
+
+The exact index compares the query against every stored vector using cosine similarity. This provides the ground truth used to evaluate ANN recall.
 
 IVF-Flat
 
-IVF-Flat (Inverted File with Flat storage) reduces the amount of data searched for each query.
+The IVF-Flat implementation:
 
-The index contains:
+Creates cluster centers.
 
-Cluster centers
+Assigns every vector to its nearest center.
 
-An inverted list for every cluster
+Stores vector IDs in inverted lists.
 
-The original vectors stored without product quantization
+At query time, selects the nearest nprobe clusters.
 
-For a query:
+Computes exact cosine similarity only for vectors in those clusters.
 
-Normalize the query vector.
+Returns the Top-K candidates.
 
-Compare it with all cluster centers.
+Benchmark
 
-Select the closest nprobe clusters.
+The benchmark uses 50,000 vectors, 64 dimensions, 100 clusters, and 500 query vectors. Exact brute-force Top-10 results are used as ground truth.
 
-Collect vectors from those clusters.
-
-Compute exact cosine similarity only for those candidates.
-
-Return the top-k candidates.
-
-This creates a speed-versus-recall trade-off controlled by nprobe.
+One benchmark run produced:
 
 nprobe
 
-A small nprobe searches fewer candidates and is faster.
+Recall@10
 
-A larger nprobe searches more candidates and generally improves Recall@10.
+Avg Candidates
 
-The dashboard evaluates:
+Speedup
 
-nprobe = 1
+1
 
-nprobe = 5
+99.56%
 
-nprobe = 10
+501
 
-nprobe = 20
+133.58x
 
-nprobe = 50
+5
 
-Exact Ground Truth
+99.90%
 
-The exact index checks every vector using cosine similarity.
+2,503
 
-The benchmark uses:
+29.66x
 
-50,000 vectors
+10
 
-64 dimensions
+99.98%
 
-500 randomly selected query vectors
+5,002
 
-top-10 exact results as ground truth
+11.55x
 
-For every IVF configuration, Recall@10 is calculated as:
+20
 
-Recall@10 = common results between IVF top-10 and exact top-10 / 10
+100.00%
 
-Speedup is calculated as:
+10,001
 
-Speedup = average exact search time / average IVF search time
+6.06x
 
-QPS shown in the Pareto graph is calculated as:
+50
 
-QPS = 1000 / search_time_ms
+100.00%
 
-The measured timings can vary between runs because they depend on the local machine and current system load.
+25,001
 
-Text Search
+2.48x
 
-VectorForge also generates 5,000 short technical documents.
+Timing can vary slightly between runs depending on the machine and system load. A useful operating point is nprobe=5, which achieved approximately 99.9% Recall@10 while examining about 5% of the dataset in this benchmark run.
 
-Each document is converted into a deterministic 64-dimensional vector using a lightweight hashing-based text vectorization method. The resulting vectors are indexed using the same Exact and IVF-Flat search implementations.
+Data and What Is Mocked
 
-Important: this text layer is intentionally lightweight and deterministic. It is not a transformer-based semantic embedding model. It demonstrates how a text-to-vector layer can feed the custom vector index without adding a third-party vector-search library.
+The benchmark data is intentionally synthetic so the experiment is reproducible.
+
+The main 50,000-vector dataset is generated programmatically as clustered synthetic vectors.
+
+The 5,000 technical documents are generated programmatically from technical topics, contexts, methods, outcomes, and deployment targets.
+
+Text documents are converted into deterministic 64-dimensional vectors using lightweight hashing-based vectorization.
+
+The text vectorizer is not a transformer-based semantic embedding model.
+
+No external vector database is used.
+
+No pre-built ANN/vector-index library is used.
+
+Exact search and IVF-Flat indexing logic are implemented in this project.
+
+Requirements
+
+Python 3.12+
+
+pip
+
+Dependencies are pinned in requirements.txt.
+
+Installation
+
+1. Clone the repository
+
+git clone https://github.com/rohitchouhan182004/VectorForge.git
+cd VectorForge
+
+2. Create a virtual environment
+
+Windows PowerShell:
+
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+
+3. Install dependencies
+
+pip install -r requirements.txt
+
+Run the Application
+
+Start the FastAPI server:
+
+uvicorn app:app --reload
+
+Open the dashboard:
+
+http://127.0.0.1:8000
 
 API Endpoints
 
-GET /
-
-Opens the VectorForge dashboard.
-
-GET /stats
-
-Returns dataset and index statistics.
-
-Example:
-
-{
-  "vectors": 50000,
-  "dimension": 64,
-  "clusters": 100,
-  "ivf_vectors": 50000,
-  "exact_vectors": 50000,
-  "deleted_vectors": 0,
-  "text_documents": 5000,
-  "text_dimension": 64,
-  "text_clusters": 50
-}
+Search
 
 POST /search
 
-Search the vector dataset.
+Search using the exact index or IVF-Flat. The vector must contain 64 dimensions.
 
-Example request:
+Example:
 
 {
   "vector": [0.1, 0.1, 0.1],
   "k": 10,
-  "nprobe": 5,
-  "algorithm": "ivf"
+  "index": "ivf",
+  "nprobe": 5
 }
 
-The vector must contain exactly 64 values.
-
-Supported algorithms:
-
-ivf
-
-exact
+Insert
 
 POST /insert
 
-Insert a new 64-dimensional vector.
+Adds a new 64-dimensional vector and returns its assigned ID.
 
-{
-  "vector": [0.1, 0.1, 0.1, "..."]
-}
-
-The API returns the assigned vector ID.
+Delete
 
 DELETE /delete/{vector_id}
 
-Marks a vector as deleted from the indexes.
+Deletes a vector by ID.
 
-Example:
+Statistics
 
-DELETE /delete/50000
+GET /stats
 
-GET /sample/{vector_id}
+Returns vector counts, dimensions, cluster counts, deleted vectors, and text-document statistics.
 
-Returns a stored sample vector by ID. The dashboard uses this endpoint to perform live vector searches.
-
-POST /text-search
-
-Search the 5,000 technical documents.
-
-Example:
-
-{
-  "query": "machine learning applications",
-  "k": 10,
-  "nprobe": 5,
-  "algorithm": "ivf"
-}
+Benchmark
 
 GET /benchmark
 
-Runs the 500-query exact-ground-truth benchmark and returns measurements for all configured nprobe values.
+Runs the exact-vs-IVF benchmark using 500 query vectors and reports Recall@10, latency, candidate counts, and speedup.
 
-## Setup / Installation
+Text Search
 
-### Requirements
+POST /text-search
 
-- Python 3.12+
-- pip
+Searches the generated technical-document collection using the same vector-search infrastructure.
 
-### Install
+Run Tests
 
-Clone the repository and open the project directory:
+python -m pytest
 
-```bash
-git clone https://github.com/rohitchouhan182004/VectorForge.git
-cd VectorForge
+If pytest is not installed:
 
-Installation
-
-Python 3.12 was used during development.
-
-Create/activate a virtual environment if desired, then install dependencies:
-
-pip install -r requirements.txt
-
-Run
-
-From the project directory:
-
-uvicorn app:app --reload
-
-Then open:
-
-http://127.0.0.1:8000
-
-On startup, VectorForge:
-
-Generates the 50,000-vector dataset.
-
-Builds the exact index.
-
-Builds the IVF-Flat index.
-
-Generates 5,000 text documents.
-
-Builds exact and IVF text indexes.
-
-Starts the FastAPI server.
+pip install pytest
 
 Project Structure
 
-vectorforge/
-│
-├── app.py                 # FastAPI application and web dashboard
-├── data.py                # 50K clustered synthetic vector dataset
-├── vector_index.py        # Exact brute-force vector index
-├── ivf_index.py           # Custom IVF-Flat implementation
-├── text_data.py           # 5K documents and deterministic text vectors
-├── benchmark.py            # Standalone benchmark utilities
-├── test_index.py          # Exact index tests
-├── test_ivf.py            # IVF index tests
-├── requirements.txt       # Python dependencies
-│
-└── README.md              # Project documentation
+VectorForge/
+├── app.py              # FastAPI API and browser dashboard
+├── benchmark.py        # Exact vs IVF benchmark
+├── data.py             # Synthetic 50K vector dataset generation
+├── ivf_index.py        # Custom IVF-Flat implementation
+├── vector_index.py     # Exact brute-force cosine index
+├── text_data.py        # 5K technical text dataset and vectorization
+├── test_index.py       # Exact index tests
+├── test_ivf.py         # IVF index tests
+├── requirements.txt    # Python dependencies
+└── README.md           # Documentation
 
 Design Constraints
 
-The vector-search implementation intentionally avoids external vector-search indexes such as:
+This project intentionally avoids:
+
+Pinecone
 
 FAISS
 
 Chroma
 
-Pinecone
+sklearn.neighbors
 
-sklearn nearest-neighbor indexes
+Other pre-built vector database/indexing solutions
 
-The core nearest-neighbor logic is implemented directly with NumPy arrays, cosine similarity, cluster selection, and inverted lists.
+NumPy is used for vector arithmetic and matrix operations.
 
-Demonstration Flow
+Why IVF-Flat?
 
-For a project demonstration:
+Exact search gives perfect recall but must compare the query with all vectors. IVF-Flat reduces the search space by routing the query to nearby clusters and then performing exact similarity calculations inside those selected clusters.
 
-Open the dashboard.
+nprobe controls the trade-off:
 
-Show 50,000 Vectors, 64 Dimensions, and 100 Clusters.
+Lower nprobe → fewer candidates, faster search, potentially lower recall
 
-Show Exact Brute-Force average search time.
+Higher nprobe → more candidates, slower search, higher recall
 
-Show IVF-Flat with nprobe=5.
+Demo Flow
 
-Explain Recall@10 and speedup.
+Start the FastAPI application.
 
-Run the live vector search using both Exact and IVF-Flat.
+Open the VectorForge dashboard.
 
-Search text such as machine learning applications.
+Show the 50K-vector dataset statistics.
 
-Show the 5,000-document results and candidate count.
+Run the benchmark.
 
-Run the 500-query benchmark.
+Compare Exact Brute-Force with IVF-Flat.
 
-Explain the Recall/QPS Pareto graph.
+Show Recall@10 and speedup.
 
-Demonstrate insert, search, and delete using the API if required.
+Run an IVF search with nprobe=5.
 
-Limitations
+Demonstrate text search over 5,000 technical documents.
 
-The benchmark measures CPU/runtime performance on the machine where the application is executed, so timings vary.
+Demonstrate Insert → Search → Delete using the API.
 
-The synthetic vector dataset is clustered specifically to evaluate IVF behavior.
+License
 
-The text vectorizer is a deterministic hashing-based representation rather than a learned semantic embedding model.
-
-The IVF implementation uses flat exact cosine scoring inside the selected clusters.
-
-Deleted vectors are handled through a deleted-ID set rather than physically compacting the stored arrays.
-
-Summary
-
-VectorForge demonstrates the core ideas behind approximate nearest-neighbor vector search without relying on a prebuilt vector-search library. It provides an exact baseline, a custom IVF-Flat implementation, configurable nprobe, quantitative Recall@10 evaluation, speed measurements, a Pareto visualization, REST APIs, and a text-search demonstration layer.
+This project is created as a technical assignment and portfolio/interview demonstration.
